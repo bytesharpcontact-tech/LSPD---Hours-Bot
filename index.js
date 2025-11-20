@@ -21,7 +21,7 @@ const CHANNEL_ID = '1440449638216892508';
 let lastMessageId = null;
 
 client.once('ready', () => {
-    console.log(`Bot online jako ${client.user.tag} – sprawdzam godziny co 5 minut`);
+    console.log(`Bot online jako ${client.user.tag} – sprawdzam co 5 minut`);
     checkHours();
     setInterval(checkHours, 5 * 60 * 1000);
 });
@@ -34,13 +34,15 @@ async function checkHours() {
 
         if (latest && latest.id !== lastMessageId) {
             lastMessageId = latest.id;
+            console.log("Znaleziono nową wiadomość z godzinami!");
+
             const lines = latest.content.split('\n').filter(l => l.includes('–') && l.includes('h'));
 
             let officers = [];
             try {
                 const snapshot = await get(db);
                 officers = snapshot.val() ? Object.values(snapshot.val()) : [];
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Błąd odczytu bazy:", e); }
 
             const today = new Date();
             const end = new Date(today);
@@ -66,7 +68,7 @@ async function checkHours() {
             });
 
             await set(db, officers);
-            console.log(`Godziny zaktualizowane! ${new Date().toLocaleString('pl-PL')}`);
+            console.log(`Godziny zapisane! ${new Date().toLocaleString('pl-PL')}`);
         }
     } catch (err) {
         console.error('Błąd:', err.message);
