@@ -1,0 +1,75 @@
+const { Client, GatewayIntentBits } = require('discord.js');
+const firebase = require('firebase/app');
+require('firebase/database');
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAruzqGnmeVafp0qiwNvrZ6WCHRk3TRFx8",
+    authDomain: "lspd-panel-1a2ad.firebaseapp.com",
+    databaseURL: "https://lspd-panel-1a2ad-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lspd-panel-1a2ad"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref('lspd');
+
+const client = new Client({ 
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 
+});
+
+const CHANNEL_ID = '1440449638216892508'; // Twój kanał
+let lastMessageId = null;
+
+client.once('ready', () => {
+    console.log(`Bot włączony jako ${client.user.tag} – sprawdzam godziny co 5 minut`);
+    checkHours();
+    setInterval(checkHours, 5 * 60 * 1000);
+});
+
+async function checkHours() {
+    try {
+        const channel = await client.channels.fetch(CHANNEL_ID);
+        const messages = await channel.messages.fetch({ limit: 15 });
+        const latest = messages.find(m => m.author.bot && m.content.includes('┃'));
+
+        if (latest && latest.id !== lastMessageId) {
+            lastMessageId = latest.id;
+            const lines = latest.content.split('\n').filter(l => l.includes('–') && l.includes('h'));
+
+            let officers = [];
+            try {
+                const snap = await db.once('value');
+                officers = snap.val() ? Object.values(snap.val()) : [];
+            } catch(e) {}
+
+            const today = new Date();
+            const end = new Date(today);
+            end.setDate(today.getDate() + 6);
+            const week = `${today.toLocaleDateString('pl-PL')} - ${end.toLocaleDateString('pl-PL')}`;
+
+            lines.forEach(line => {
+                const match = line.match(/^\d+\s*-\s*(.+?)\s*-\s*.+?\s*-\s*(.+)$/);
+                if (!match) return;
+                const name = match[1].trim();
+                const hoursStr = match[2].trim();
+
+                const officer = officers.find(o => 
+                    o.name.toLowerCase() === name.toLowerCase() || 
+                    o.name.toLowerCase().includes(name.toLowerCase()) ||
+                    name.toLowerCase().includes(o.name.toLowerCase())
+                );
+
+                if (officer) {
+                    if (!officer.hours) officer.hours = {};
+                    officer.hours[week] = `${week} - ${hoursStr}`;
+                }
+            });
+
+            await db.set(officers);
+            console.log(`Godziny zaktualizowane! ${new Date().toLocaleString('pl-PL')}`);
+        }
+    } catch (err) {
+        console.error('Błąd:', err.message);
+    }
+}
+
+client.login('MTQ0MDQxMTA4OTc5OTA5MDM1OQ.GL6Vin.JcRHT6Bt6wuw6Qx9IKai4KkW2L42ENDRUGpjzc');
