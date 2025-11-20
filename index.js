@@ -72,4 +72,4 @@ async function checkHours() {
     }
 }
 
-client.login('MTQ0MDQxMTA4OTc5OTA5MDM1OQ.GL6Vin.JcRHT6Bt6wuw6Qx9IKai4KkW2L42ENDRUGpjzc');
+client.login('MTQ0MDQxMTA4OTc5OTA5MDM1OQ.G-Z9gQ.iJy36r9ZP2mDBXDaltsraoO65SGP6KUz3zfCQM');
