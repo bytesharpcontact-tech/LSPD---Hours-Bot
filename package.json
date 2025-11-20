@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "discord.js": "^14.15.3",
-    "firebase": "^9.22.0"
+    "firebase": "^10.13.1"
   }
 }
