@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const firebase = require('firebase/app');
-require('firebase/database');
+const { initializeApp } = require('firebase/app');
+const { getDatabase, ref, set, get } = require('firebase/database');
 
 const firebaseConfig = {
     apiKey: "AIzaSyAruzqGnmeVafp0qiwNvrZ6WCHRk3TRFx8",
@@ -9,18 +9,19 @@ const firebaseConfig = {
     projectId: "lspd-panel-1a2ad"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database().ref('lspd');
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const db = ref(database, 'lspd');
 
 const client = new Client({ 
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 
 });
 
-const CHANNEL_ID = '1440449638216892508'; // Twój kanał
+const CHANNEL_ID = '1440449638216892508';
 let lastMessageId = null;
 
 client.once('ready', () => {
-    console.log(`Bot włączony jako ${client.user.tag} – sprawdzam godziny co 5 minut`);
+    console.log(`Bot online jako ${client.user.tag} – sprawdzam godziny co 5 minut`);
     checkHours();
     setInterval(checkHours, 5 * 60 * 1000);
 });
@@ -37,9 +38,9 @@ async function checkHours() {
 
             let officers = [];
             try {
-                const snap = await db.once('value');
-                officers = snap.val() ? Object.values(snap.val()) : [];
-            } catch(e) {}
+                const snapshot = await get(db);
+                officers = snapshot.val() ? Object.values(snapshot.val()) : [];
+            } catch(e) { console.error(e); }
 
             const today = new Date();
             const end = new Date(today);
@@ -64,7 +65,7 @@ async function checkHours() {
                 }
             });
 
-            await db.set(officers);
+            await set(db, officers);
             console.log(`Godziny zaktualizowane! ${new Date().toLocaleString('pl-PL')}`);
         }
     } catch (err) {
@@ -72,4 +73,4 @@ async function checkHours() {
     }
 }
 
-client.login(process.env.DISCORD_TOKEN);  // Używa secret z GitHub
+client.login(process.env.DISCORD_TOKEN);
