@@ -2,17 +2,18 @@ name: LSPD Hours Bot 24/7
 
 on:
   schedule:
-    - cron: '*/5 * * * *'     # co 5 minut
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
-  run-bot:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Ustaw Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
       - run: npm install
       - run: npm start
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
